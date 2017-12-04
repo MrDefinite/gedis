@@ -1,7 +1,23 @@
 package main
 
-import "fmt"
+import "log"
+import (
+	"github.com/MrDefinite/gedis/server"
+)
 
 func main() {
-	fmt.Printf("hello gedis!")
+	log.Println("Gedis begins to run!")
+
+	gs := &server.GedisServer{}
+
+	server.InitServerConfig(gs)
+	server.InitServer(gs)
+
+
+	server.MainLoop(gs)
+
+	server.TearDownServer(gs)
+
+
+	log.Println("Gedis Stopped!")
 }

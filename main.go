@@ -1,12 +1,16 @@
 package main
 
-import "log"
 import (
 	"github.com/MrDefinite/gedis/server"
+	"github.com/sirupsen/logrus"
+)
+
+var (
+	log = logrus.New()
 )
 
 func main() {
-	log.Println("Gedis begins to run!")
+	log.Info("Gedis begins to run!")
 
 	gs := &server.GedisServer{}
 
@@ -19,5 +23,5 @@ func main() {
 	server.TearDownServer(gs)
 
 
-	log.Println("Gedis Stopped!")
+	log.Info("Gedis Stopped!")
 }

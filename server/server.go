@@ -1,17 +1,21 @@
 package server
 
 import (
-	"log"
 	"github.com/MrDefinite/gedis/database"
 	"net"
 	"os"
 	"strconv"
+	"github.com/sirupsen/logrus"
 )
 
 const (
 	DEFAULT_CONN_TYPE = "tcp"
 	DEFAULT_CONN_PORT = 9019
 	DEFAULT_CONN_HOST = "0.0.0.0"
+)
+
+var (
+	log = logrus.New()
 )
 
 type GedisServer struct {
@@ -26,6 +30,8 @@ type GedisServer struct {
 	db *database.GedisDB
 
 	clients []*GedisClient
+
+	logLevel logrus.Level
 }
 
 func listenToPort(gs *GedisServer) {
@@ -47,21 +53,27 @@ func handleConnections(gs *GedisServer) {
 		// Listen for an incoming connection.
 		conn, err := gs.listener.Accept()
 		if err != nil {
-			log.Println("Error accepting: ", err.Error())
+			log.Warn("Error accepting: ", err.Error())
 			break
 		}
 		// Create client for incoming connection
-		client := GedisClient{conn:conn}
-		gs.clients = append(gs.clients, &client)
+		client := CreateClient(conn)
+		gs.clients = append(gs.clients, client)
 	}
 }
 
 func initDB() {
-	log.Println("Initializing gedis databases now")
+	log.Info("Initializing gedis databases now")
+}
+
+func initLogger(gs *GedisServer) {
+	log.SetLevel(gs.logLevel)
 }
 
 func InitServer(gs *GedisServer) {
-	log.Println("Initializing gedis gs now")
+	log.Info("Initializing gedis gs now")
+
+	initLogger(gs)
 
 	CreateEventLoop(gs)
 
@@ -74,11 +86,12 @@ func InitServer(gs *GedisServer) {
 }
 
 func InitServerConfig(gs *GedisServer) {
-	log.Println("Initializing gedis server configuration now")
+	log.Info("Initializing gedis server configuration now")
 
 	gs.address = DEFAULT_CONN_HOST
 	gs.port = DEFAULT_CONN_PORT
 	gs.connectionType = DEFAULT_CONN_TYPE
+	gs.logLevel = logrus.DebugLevel
 }
 
 func TearDownServer(gs *GedisServer) {

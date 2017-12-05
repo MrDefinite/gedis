@@ -2,7 +2,6 @@ package server
 
 import (
 	"time"
-	"log"
 )
 
 type FileEvent struct {
@@ -28,7 +27,7 @@ type eventLoop struct {
 }
 
 func CreateEventLoop(gs *GedisServer) {
-	log.Println("Creating main event loop now")
+	log.Info("Creating main event loop now")
 	gs.el = &eventLoop{}
 }
 

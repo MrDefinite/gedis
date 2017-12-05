@@ -31,19 +31,22 @@ func CreateEventLoop(gs *GedisServer) {
 	gs.el = &eventLoop{}
 }
 
-func processFileEvents() {
+func processFileEvents(gs *GedisServer) {
+	for _, client := range gs.clients {
+		if client.cmdArgs != nil {
+			client.sendResponse()
+			client.cmdArgs = nil
+		}
+	}
+}
+
+func processTimeEvents(gs *GedisServer) {
 
 }
 
-func processTimeEvents() {
-
-}
-
-func processEvents(eventLoop *eventLoop) {
-
-	processFileEvents()
-	processTimeEvents()
-
+func processEvents(gs *GedisServer) {
+	processFileEvents(gs)
+	processTimeEvents(gs)
 }
 
 func CreateFileEvent() {
@@ -67,7 +70,7 @@ func MainLoop(gs *GedisServer) {
 
 	for gs.el.stop != true {
 		// Run event loop
-		processEvents(gs.el)
+		processEvents(gs)
 	}
 
 }

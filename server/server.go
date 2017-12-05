@@ -57,8 +57,9 @@ func handleConnections(gs *GedisServer) {
 			break
 		}
 		// Create client for incoming connection
-		client := CreateClient(conn)
+		client := createClient(conn)
 		gs.clients = append(gs.clients, client)
+		go client.receiveCmd()
 	}
 }
 

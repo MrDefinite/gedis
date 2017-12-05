@@ -44,26 +44,26 @@ func main() {
 		bytes, _, err := reader.ReadLine()
 		if err != nil {
 			log.Error("Failed to read command line from console, the error is: " + err.Error())
-			continue
+			break
 		}
 		line := string(bytes)
 		log.Debug("Incoming command is: " + line)
 
-		//if simpleCmdCheck(line) == false {
-		//	log.Warnf("Command %s is not a valid!", line)
-		//}
+		if simpleCmdCheck(line) == false {
+			log.Warnf("Command %s is not a valid!", line)
+		}
 
 		// Send it to server now
-		//conn.Write([]byte(line))
-		//
-		//// Wait for response from server
-		//buff := make([]byte, 1024)
-		//n, err := conn.Read(buff)
-		//if err != nil {
-		//	log.Error("Failed to read response from server, the error is: " + err.Error())
-		//	continue
-		//}
-		//log.Debugf("Receive: %s", buff[:n])
+		conn.Write([]byte(line))
+
+		// Wait for response from server
+		buff := make([]byte, 1024)
+		n, err := conn.Read(buff)
+		if err != nil {
+			log.Error("Failed to read response from server, the error is: " + err.Error())
+			continue
+		}
+		log.Debugf("Receive: %s", buff[:n])
 	}
 
 	conn.Close()

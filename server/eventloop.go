@@ -34,6 +34,7 @@ func CreateEventLoop(gs *GedisServer) {
 func processFileEvents(gs *GedisServer) {
 	for _, client := range gs.clients {
 		if client.cmdArgs != nil {
+
 			client.sendResponse()
 			client.cmdArgs = nil
 		}

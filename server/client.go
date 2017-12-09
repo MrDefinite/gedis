@@ -11,7 +11,7 @@ import (
 
 type GedisClient struct {
 	conn       net.Conn
-	db         *database.GedisDB
+	DB         *database.GedisDB
 	clientName string
 	clientId   uuid.UUID
 	cmdArgs    []string

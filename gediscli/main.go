@@ -61,7 +61,7 @@ func main() {
 		n, err := conn.Read(buff)
 		if err != nil {
 			log.Error("Failed to read response from server, the error is: " + err.Error())
-			continue
+			break
 		}
 		log.Debugf("Receive: %s", buff[:n])
 	}

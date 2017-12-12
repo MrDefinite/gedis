@@ -1,13 +1,14 @@
 package command
 
-import "github.com/MrDefinite/gedis/server"
+import (
+	"github.com/MrDefinite/gedis/database/types"
+	"github.com/MrDefinite/gedis/database"
+)
 
-type typeCommandProc struct{
-
+type typeCommandProc struct {
 }
 
+func (c typeCommandProc) execute(db *database.GedisDB, args []*types.GedisObject) *types.GedisObject {
 
-func (c typeCommandProc) execute(client *server.GedisClient) {
-
+	return nil
 }
-

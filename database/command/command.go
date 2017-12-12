@@ -1,11 +1,16 @@
 package command
 
 import (
-	"github.com/MrDefinite/gedis/server"
 	"fmt"
+	"github.com/MrDefinite/gedis/database/types"
+	"github.com/pkg/errors"
+	"github.com/MrDefinite/gedis/database"
+	"github.com/sirupsen/logrus"
 )
 
-var commandDict = map[string]*Command {
+var log = logrus.New()
+
+var commandDict = map[string]*Command{
 	"get":  initCommand("get", getCommandProc{}),
 	"set":  initCommand("set", setCommandProc{}),
 	"type": initCommand("type", typeCommandProc{}),
@@ -23,7 +28,7 @@ type Command struct {
 }
 
 type commandProc interface {
-	execute(client *server.GedisClient)
+	execute(db *database.GedisDB, args []*types.GedisObject) *types.GedisObject
 }
 
 func initCommand(name string, proc commandProc) *Command {
@@ -40,14 +45,16 @@ func initCommand(name string, proc commandProc) *Command {
 	return &cmd
 }
 
-func dispatchCommand(cmd string, client *server.GedisClient) {
-	currentCommand := commandDict[cmd]
+func DispatchCommand(db *database.GedisDB, cmdArgs []*types.GedisObject) (*types.GedisObject, error) {
+	log.Debugf("Dispatching the command...")
+	commandName := types.GetStringValueFromObject(cmdArgs[0])
+	currentCommand := commandDict[commandName]
 	if currentCommand == nil {
-		fmt.Errorf("cannot find command named as: %s", cmd)
-		return
+		fmt.Errorf("cannot find command named as: %s", commandName)
+		return nil, errors.New("cannot find command named as: " + commandName)
 	}
 
+	args := cmdArgs[1:]
 	proc := currentCommand.proc
-	proc.execute(client)
+	return proc.execute(db, args), nil
 }
-

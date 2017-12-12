@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/MrDefinite/gedis/database"
+	"github.com/MrDefinite/gedis/database/types"
 	"net"
 	"os"
 	"strconv"
@@ -9,9 +10,10 @@ import (
 )
 
 const (
-	DEFAULT_CONN_TYPE = "tcp"
-	DEFAULT_CONN_PORT = 9019
-	DEFAULT_CONN_HOST = "0.0.0.0"
+	DEFAULT_CONN_TYPE   = "tcp"
+	DEFAULT_CONN_PORT   = 9019
+	DEFAULT_CONN_HOST   = "0.0.0.0"
+	DEFAULT_MAX_CLIENTS = 10000
 )
 
 var (
@@ -23,11 +25,13 @@ type GedisServer struct {
 	port           int
 	connectionType string
 
+	maxClients int
+
 	listener net.Listener
 
 	el *eventLoop
 
-	db *database.GedisDB
+	db []*database.GedisDB
 
 	clients []*GedisClient
 
@@ -57,14 +61,23 @@ func handleConnections(gs *GedisServer) {
 			break
 		}
 		// Create client for incoming connection
-		client := createClient(conn)
+		client := createClient(conn, gs.db[0])
+		if len(gs.clients) >= gs.maxClients {
+			log.Warn("Max client number exceeds")
+			client.sendResponse("Max client number exceeds, please connect later")
+			tearDownClient(client)
+			continue
+		}
+
+		log.Debug("Enqueue new client instance")
 		gs.clients = append(gs.clients, client)
-		go client.receiveCmd()
 	}
 }
 
-func initDB() {
+func initDB(gs *GedisServer) {
 	log.Info("Initializing gedis databases now")
+
+	gs.db = append(gs.db, database.InitDBFromZero())
 }
 
 func initLogger(gs *GedisServer) {
@@ -76,13 +89,14 @@ func InitServer(gs *GedisServer) {
 
 	initLogger(gs)
 
+	types.InitCommonObjects()
+
 	CreateEventLoop(gs)
 
-	initDB()
+	initDB(gs)
 
 	listenToPort(gs)
 	go handleConnections(gs)
-
 
 }
 
@@ -92,6 +106,7 @@ func InitServerConfig(gs *GedisServer) {
 	gs.address = DEFAULT_CONN_HOST
 	gs.port = DEFAULT_CONN_PORT
 	gs.connectionType = DEFAULT_CONN_TYPE
+	gs.maxClients = DEFAULT_MAX_CLIENTS
 	gs.logLevel = logrus.DebugLevel
 }
 

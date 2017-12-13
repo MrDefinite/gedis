@@ -66,7 +66,7 @@ func main() {
 			break
 		}
 
-		fmt.Println(string(buff[:n]))
+		fmt.Println("\"" + string(buff[:n]) + "\"")
 	}
 
 	conn.Close()

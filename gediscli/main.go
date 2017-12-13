@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"os"
 	"github.com/sirupsen/logrus"
+	"fmt"
 )
 
 
@@ -41,16 +42,17 @@ func main() {
 	log.Info("Connected to server, initializing console reader now...")
 	reader := bufio.NewReader(os.Stdin)
 	for {
+		fmt.Printf("%s > ", gedisServer)
 		bytes, _, err := reader.ReadLine()
 		if err != nil {
 			log.Error("Failed to read command line from console, the error is: " + err.Error())
 			break
 		}
 		line := string(bytes)
-		log.Debug("Incoming command is: " + line)
 
 		if simpleCmdCheck(line) == false {
 			log.Warnf("Command %s is not a valid!", line)
+			continue
 		}
 
 		// Send it to server now
@@ -63,7 +65,8 @@ func main() {
 			log.Error("Failed to read response from server, the error is: " + err.Error())
 			break
 		}
-		log.Debugf("Receive: %s", buff[:n])
+
+		fmt.Println(string(buff[:n]))
 	}
 
 	conn.Close()
@@ -76,3 +79,4 @@ func simpleCmdCheck(cmd string) bool {
 
 	return true
 }
+

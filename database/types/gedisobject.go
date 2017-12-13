@@ -1,6 +1,9 @@
 package types
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
+)
 
 var (
 	log           = logrus.New()
@@ -9,21 +12,21 @@ var (
 
 const (
 	GEDIS_STRING = 0
-	GEDIS_LIST
-	GEDIS_HASH
-	GEDIS_SET
-	GEDIS_ZSET
+	GEDIS_LIST   = 1
+	GEDIS_HASH   = 2
+	GEDIS_SET    = 3
+	GEDIS_ZSET   = 4
 )
 
 const (
 	GEDIS_ENCODING_INT        = 0
-	GEDIS_ENCODING_EMBSTR
-	GEDIS_ENCODING_RAW
-	GEDIS_ENCODING_HT
-	GEDIS_ENCODING_LINKEDLIST
-	GEDIS_ENCODING_ZIPLIST
-	GEDIS_ENCODING_INTSET
-	GEDIS_ENCODING_SKIPLIST
+	GEDIS_ENCODING_EMBSTR     = 1
+	GEDIS_ENCODING_RAW        = 2
+	GEDIS_ENCODING_HT         = 3
+	GEDIS_ENCODING_LINKEDLIST = 4
+	GEDIS_ENCODING_ZIPLIST    = 5
+	GEDIS_ENCODING_INTSET     = 6
+	GEDIS_ENCODING_SKIPLIST   = 7
 )
 
 type GedisObject struct {
@@ -79,4 +82,33 @@ func InitCommonObjects() {
 		queued:         createObject(GEDIS_STRING, "+QUEUED\r\n"),
 		emptyscan:      createObject(GEDIS_STRING, "*2\r\n$1\r\n0\r\n*0\r\n"),
 	}
+}
+
+func GetEncodeString(obj *GedisObject) (*GedisObject, error) {
+	encodeObj := GedisObject{
+		objType: GEDIS_STRING,
+		encoding: GEDIS_ENCODING_RAW,
+	}
+	encode := obj.encoding
+	switch encode {
+	case GEDIS_ENCODING_INT:
+		encodeObj.ptr = "Integer"
+	case GEDIS_ENCODING_EMBSTR:
+		encodeObj.ptr = "Embed string"
+	case GEDIS_ENCODING_RAW:
+		encodeObj.ptr = "string"
+	case GEDIS_ENCODING_HT:
+		encodeObj.ptr = "Hash table"
+	case GEDIS_ENCODING_LINKEDLIST:
+		encodeObj.ptr = "Linked list"
+	case GEDIS_ENCODING_ZIPLIST:
+		encodeObj.ptr = "Zip list"
+	case GEDIS_ENCODING_INTSET:
+		encodeObj.ptr = "Int set"
+	case GEDIS_ENCODING_SKIPLIST:
+		encodeObj.ptr = "Skip list"
+	default:
+		return nil, errors.New("mal-format encode type found!")
+	}
+	return &encodeObj, nil
 }

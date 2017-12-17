@@ -8,6 +8,7 @@ import (
 	"github.com/MrDefinite/gedis/database"
 	"github.com/MrDefinite/gedis/database/types"
 	"strings"
+	"github.com/MrDefinite/gedis/common/protocol/resp"
 )
 
 type GedisClient struct {
@@ -72,7 +73,7 @@ func (c *GedisClient) handleCmd() {
 			}
 
 			log.Debugf("Received cmd is: %s", data)
-			c.CmdArgs = parseCmd(data)
+			c.CmdArgs, _ = parseCmd(data)
 			log.Debugf("Received cmd already added to client instance")
 		default:
 			fmt.Errorf("receive data failed: %s", err)
@@ -85,15 +86,20 @@ func (c *GedisClient) sendResponse(response string) {
 	c.conn.Write([]byte(response))
 }
 
-func parseCmd(cmd string) []*types.GedisObject {
+func parseCmd(cmd string) ([]*types.GedisObject, error) {
 	cmd = strings.TrimSpace(cmd)
-	args := strings.Split(cmd, " ")
+	requestCmd, err := resp.ParseRequest(cmd)
+	if err != nil {
+		return nil, err
+	}
 
 	var objArgs []*types.GedisObject
-	for _, arg := range args {
+	objArgs = append(objArgs, types.CreateStringObject(requestCmd.Name))
+
+	for _, arg := range requestCmd.Params {
 		objArg := types.CreateStringObject(arg)
 		objArgs = append(objArgs, objArg)
 	}
 
-	return objArgs
+	return objArgs, nil
 }

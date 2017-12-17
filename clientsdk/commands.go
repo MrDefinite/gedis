@@ -15,14 +15,14 @@ func (gc *Gclient) Set(params []string) (string, error) {
 	plainCmd = strings.TrimSpace(plainCmd)
 
 	encodedCmd := resp.EncodeCmd(plainCmd)
-	resonse, err := gc.sendRequest(encodedCmd)
+	response, err := gc.sendRequest(encodedCmd)
 
 	if err != nil {
 		return "", err
 	}
-	resonse = resp.ParseResponse(resonse)
+	response = resp.ParseResponse(response)
 
-	return resonse, nil
+	return response, nil
 }
 
 func (gc *Gclient) Get(params []string) string {

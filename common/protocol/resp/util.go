@@ -17,8 +17,8 @@ const (
 )
 
 type RequestCmd struct {
-	cmdName string
-	params  []string
+	Name   string
+	Params []string
 }
 
 type ResponseCmd struct {
@@ -89,9 +89,9 @@ func ParseRequest(input string) (*RequestCmd, error) {
 		input = input[2:]
 
 		if i == 0 {
-			requestCmd.cmdName = bulk
+			requestCmd.Name = bulk
 		} else {
-			requestCmd.params = append(requestCmd.params, bulk)
+			requestCmd.Params = append(requestCmd.Params, bulk)
 		}
 	}
 

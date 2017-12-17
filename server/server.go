@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	DEFAULT_CONN_TYPE   = "tcp"
-	DEFAULT_CONN_PORT   = 9019
-	DEFAULT_CONN_HOST   = "0.0.0.0"
-	DEFAULT_MAX_CLIENTS = 10000
+	defaultConnType   = "tcp"
+	defaultConnPort   = 9019
+	defaultConnHost   = "0.0.0.0"
+	defaultMaxClients = 10000
 )
 
 var (
@@ -103,10 +103,10 @@ func InitServer(gs *GedisServer) {
 func InitServerConfig(gs *GedisServer) {
 	log.Info("Initializing gedis server configuration now")
 
-	gs.address = DEFAULT_CONN_HOST
-	gs.port = DEFAULT_CONN_PORT
-	gs.connectionType = DEFAULT_CONN_TYPE
-	gs.maxClients = DEFAULT_MAX_CLIENTS
+	gs.address = defaultConnHost
+	gs.port = defaultConnPort
+	gs.connectionType = defaultConnType
+	gs.maxClients = defaultMaxClients
 	gs.logLevel = logrus.DebugLevel
 }
 

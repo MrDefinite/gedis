@@ -5,6 +5,7 @@ import (
 	"net"
 	"errors"
 	"sync"
+	"strconv"
 )
 
 var (
@@ -27,8 +28,8 @@ type Gclient struct {
 	logLevel                logrus.Level
 	conn                    net.Conn
 	idleTimeout             int64
-	server                  string
-	requestTimeout          int64
+	Server                  string
+	requestTimeout          int32
 	isCommunicatingToServer bool
 	commLock                sync.Mutex
 }
@@ -49,13 +50,13 @@ func CreateNewInstance() *Gclient {
 	return &gc
 }
 
-func (gc *Gclient) ConnectToServer(address string, port string) error {
-	if address == "" || port == "" {
+func (gc *Gclient) ConnectToServer(host string, port int) error {
+	if host == "" || port <= 0 {
 		return errors.New("illegal address or port for gedis server")
 	}
 
-	gc.server = address + ":" + port
-	conn, err := net.Dial(defaultConnType, gc.server)
+	gc.Server = host + ":" + strconv.Itoa(port)
+	conn, err := net.Dial(defaultConnType, gc.Server)
 	if err != nil {
 		return err
 	}
@@ -63,6 +64,24 @@ func (gc *Gclient) ConnectToServer(address string, port string) error {
 	gc.conn = conn
 
 	return nil
+}
+
+func (gc *Gclient) CloseConnection() error {
+	if gc.conn == nil {
+		return errors.New("there is no connection there")
+	}
+
+	gc.conn.Close()
+
+	return nil
+}
+
+func (gc *Gclient) ParseAndProcessCmd(cmd string) (string, error) {
+
+
+
+
+	return "", nil
 }
 
 

@@ -31,33 +31,45 @@ func ParseResponse(input string) string {
 	return ""
 }
 
+func parseLength(input string) (int, string, error) {
+	length := 0
+	for input[0] != '\r' {
+		length = length * 10 + int(input[0] - '0')
+		input = input[1:]
+	}
+
+	if len(input) <= 1 {
+		return 0, "", errors.New("mal-format string received")
+	}
+	if input[0:2] != DELIMITER {
+		return 0, "", errors.New("mal-format string received")
+	}
+
+	input = input[2:]
+	return length, input, nil
+}
+
 func ParseRequest(input string) (*RequestCmd, error) {
 	input = strings.TrimSpace(input)
 
 	requestCmd := RequestCmd{}
 
-	lengthStr := ""
-	// Get cmd length
-	for input != "" {
-		if string([]rune(input)[0]) == ARRAYS {
-			input = input[1:]
-			continue
-		}
-		if input[0:2] == DELIMITER {
-			input = input[2:]
-			break
-		}
-		lengthStr += string([]rune(input)[0])
-		input = input[1:]
+	if string([]rune(input)[0]) != ARRAYS {
+		return nil, errors.New("mal-format string received")
 	}
+	input = input[1:]
 
-	length, err := strconv.Atoi(lengthStr)
+	length, input, err := parseLength(input)
 	if err != nil {
 		return nil, err
 	}
 
 	// Begin to parse
 	for i := 0; i < length; i++ {
+		if len(input) < 1 {
+			return nil, errors.New("mal-format string received")
+		}
+
 		// Read next bulk string
 		// 1. Get string length
 		mark := string([]rune(input)[0])
@@ -66,24 +78,18 @@ func ParseRequest(input string) (*RequestCmd, error) {
 		}
 		input = input[1:]
 
-		bulkLengthStr := ""
-		for input != "" {
-			if input[0:2] == DELIMITER {
-				input = input[2:]
-				break
-			}
-			bulkLengthStr += string([]rune(input)[0])
-			input = input[1:]
-		}
-
-		// 2. Get bulk string
-		bulkLength, err := strconv.Atoi(bulkLengthStr)
+		bulkLength, input, err := parseLength(input)
 		if err != nil {
 			return nil, err
 		}
+
+		// 2. Get bulk string
+		if len(input) < bulkLength {
+			return nil, errors.New("mal-format string received")
+		}
 		bulk := input[0:bulkLength]
 		input = input[bulkLength:]
-		if input[0:2] != DELIMITER {
+		if len(input) < 2 || input[0:2] != DELIMITER {
 			return nil, errors.New("mal-format string received")
 		}
 		input = input[2:]
@@ -103,15 +109,20 @@ func EncodeCmd(cmd string) string {
 	tokens := strings.Split(cmd, " ")
 	cmdLength := len(tokens)
 
-	encodedCmd := ARRAYS + string(cmdLength) + DELIMITER
-	for i := 1; i < cmdLength; i++ {
+	encodedCmd := ARRAYS + strconv.Itoa(cmdLength) + DELIMITER
+	for i := 0; i < cmdLength; i++ {
 		token := tokens[i]
 		if token == "" {
 			continue
 		}
-		encodedCmd += BULK_STRINGS + string(len(token)) + DELIMITER
+		encodedCmd += BULK_STRINGS + strconv.Itoa(len(token)) + DELIMITER
 		encodedCmd += token + DELIMITER
 	}
 
 	return encodedCmd
 }
+
+func EncodeResponse(response string) string {
+	return response
+}
+

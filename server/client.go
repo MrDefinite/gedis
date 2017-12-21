@@ -74,7 +74,6 @@ func (c *GedisClient) handleCmd() {
 
 			log.Debugf("Received cmd is: %s", data)
 			c.CmdArgs, _ = parseCmd(data)
-			log.Debugf("Received cmd already added to client instance")
 		default:
 			fmt.Errorf("receive data failed: %s", err)
 			return

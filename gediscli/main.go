@@ -2,20 +2,18 @@ package main
 
 import (
 	"flag"
-	"net"
-	"strconv"
 	"bufio"
 	"os"
 	"github.com/sirupsen/logrus"
 	"fmt"
+	"github.com/MrDefinite/gedis/clientsdk"
 )
 
 
 const (
-	DEFAULT_CONN_TYPE = "tcp"
-	DEFAULT_CONN_PORT = 9019
-	DEFAULT_CONN_HOST = "127.0.0.1"
-	DEFAULT_LOG_LEVEL = logrus.DebugLevel
+	defaultConnPort = 9019
+	defaultConnHost = "127.0.0.1"
+	defaultLogLevel = logrus.DebugLevel
 )
 
 var (
@@ -23,26 +21,27 @@ var (
 )
 
 func main() {
-	log.Level = DEFAULT_LOG_LEVEL
+	log.Level = defaultLogLevel
 	log.Out = os.Stdout
 
 	log.Info("Initializing gedis cli service...")
+	log.Info("Creating gedis client service...")
 
-	server := flag.String("server", DEFAULT_CONN_HOST, "gedis server address")
-	port := flag.Int("port", DEFAULT_CONN_PORT, "gedis server port")
-	gedisServer := *server + ":" + strconv.Itoa(*port)
+	gClient := clientsdk.CreateNewInstance()
 
-	log.Infof("Connecting to gedis server '%s'", gedisServer)
 
-	conn, err := net.Dial(DEFAULT_CONN_TYPE, gedisServer)
+	host := flag.String("host", defaultConnHost, "gedis host address")
+	port := flag.Int("port", defaultConnPort, "gedis host port")
+
+	err := gClient.ConnectToServer(*host, *port)
 	if err != nil {
-		log.Fatalln("Failed to connect to gedis server, the error is: " + err.Error())
+		log.Fatalln("Failed to connect to gedis host, the error is: " + err.Error())
 	}
 
 	log.Info("Connected to server, initializing console reader now...")
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Printf("%s > ", gedisServer)
+		fmt.Printf("%s > ", gClient.Server)
 		bytes, _, err := reader.ReadLine()
 		if err != nil {
 			log.Error("Failed to read command line from console, the error is: " + err.Error())
@@ -55,21 +54,16 @@ func main() {
 			continue
 		}
 
-		// Send it to server now
-		conn.Write([]byte(line))
-
-		// Wait for response from server
-		buff := make([]byte, 1024)
-		n, err := conn.Read(buff)
+		response, err := gClient.ProcessCmd(line)
 		if err != nil {
-			log.Error("Failed to read response from server, the error is: " + err.Error())
+			log.Error(err.Error())
 			break
 		}
 
-		fmt.Println("\"" + string(buff[:n]) + "\"")
+		fmt.Println("\"" + response + "\"")
 	}
 
-	conn.Close()
+	gClient.CloseConnection()
 }
 
 func simpleCmdCheck(cmd string) bool {

@@ -26,10 +26,12 @@ func (gc *Gclient) sendRequest(encodedRequest string) (string, error) {
 	// Init buffer
 	buff := make([]byte, 1024)
 
-	gc.conn.SetReadDeadline(time.Now().Add(time.Duration(gc.requestTimeout)))
+	gc.conn.SetReadDeadline(time.Now().Add(time.Duration(gc.requestTimeout) * time.Second))
 	// Wait for response from server
+	// TODO: buff not big enough
 	n, err := gc.conn.Read(buff)
 	if err != nil {
+		gc.commLock.Unlock()
 		return "", err
 	}
 	gc.commLock.Unlock()

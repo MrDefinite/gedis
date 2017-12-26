@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/MrDefinite/gedis/database"
 	"github.com/MrDefinite/gedis/database/types"
-	"strings"
 	"github.com/MrDefinite/gedis/common/protocol/resp"
 )
 
@@ -72,8 +71,11 @@ func (c *GedisClient) handleCmd() {
 				break
 			}
 
-			log.Debugf("Received cmd is: %s", data)
-			c.CmdArgs, _ = parseCmd(data)
+			log.Debugf("Received cmd is: %q\n", data)
+			c.CmdArgs, err = parseCmd(data)
+			if err != nil {
+				c.Response = types.CommonObjects.Syntaxerr
+			}
 		default:
 			fmt.Errorf("receive data failed: %s", err)
 			return
@@ -86,7 +88,6 @@ func (c *GedisClient) sendResponse(response string) {
 }
 
 func parseCmd(cmd string) ([]*types.GedisObject, error) {
-	cmd = strings.TrimSpace(cmd)
 	requestCmd, err := resp.ParseRequest(cmd)
 	if err != nil {
 		return nil, err

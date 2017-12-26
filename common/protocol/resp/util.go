@@ -31,35 +31,48 @@ func ParseResponse(input string) string {
 	return ""
 }
 
-func parseLength(input string) (int, string, error) {
+func parseLength(in *string) (int, error) {
 	length := 0
-	for input[0] != '\r' {
-		length = length * 10 + int(input[0] - '0')
-		input = input[1:]
+	for (*in)[0:1] != "\r" {
+		length = length * 10 + int((*in)[0] - '0')
+		*in = (*in)[1:]
 	}
 
-	if len(input) <= 1 {
-		return 0, "", errors.New("mal-format string received")
+	if len(*in) <= 1 {
+		return 0, errors.New("mal-format string received")
 	}
-	if input[0:2] != DELIMITER {
-		return 0, "", errors.New("mal-format string received")
+	if !isDelimiter(*in) {
+		return 0, errors.New("mal-format string received")
 	}
 
-	input = input[2:]
-	return length, input, nil
+	*in = (*in)[2:]
+	return length, nil
+}
+
+func isArray(in string) bool {
+	return len(in) >= 1 && in[0:1] == ARRAYS
+}
+
+func isBulk(in string) bool {
+	return len(in) >= 1 && in[0:1] == BULK_STRINGS
+}
+
+func isDelimiter(in string) bool {
+	return len(in) >= 2 && in[0:2] == DELIMITER
 }
 
 func ParseRequest(input string) (*RequestCmd, error) {
-	input = strings.TrimSpace(input)
+	requestCmd := RequestCmd{
+		Name: "",
+		Params: make([]string, 0),
+	}
 
-	requestCmd := RequestCmd{}
-
-	if string([]rune(input)[0]) != ARRAYS {
+	if !isArray(input) {
 		return nil, errors.New("mal-format string received")
 	}
 	input = input[1:]
 
-	length, input, err := parseLength(input)
+	length, err := parseLength(&input)
 	if err != nil {
 		return nil, err
 	}
@@ -72,13 +85,12 @@ func ParseRequest(input string) (*RequestCmd, error) {
 
 		// Read next bulk string
 		// 1. Get string length
-		mark := string([]rune(input)[0])
-		if mark != BULK_STRINGS {
+		if !isBulk(input) {
 			return nil, errors.New("mal-format string received")
 		}
 		input = input[1:]
 
-		bulkLength, input, err := parseLength(input)
+		bulkLength, err := parseLength(&input)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +101,7 @@ func ParseRequest(input string) (*RequestCmd, error) {
 		}
 		bulk := input[0:bulkLength]
 		input = input[bulkLength:]
-		if len(input) < 2 || input[0:2] != DELIMITER {
+		if !isDelimiter(input) {
 			return nil, errors.New("mal-format string received")
 		}
 		input = input[2:]

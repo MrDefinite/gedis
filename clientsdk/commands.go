@@ -67,7 +67,7 @@ func buildAndEncodeCmd(cmdName string, params []string) string {
 }
 
 func processRequest(gc *Gclient, encodedCmd string) (string, error) {
-	response, err := gc.sendRequest(encodedCmd)
+	response, err := gc.sendRequestAndGetResponse(encodedCmd)
 	if err != nil {
 		return "", err
 	}

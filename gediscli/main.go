@@ -1,14 +1,14 @@
 package main
 
 import (
-	"flag"
 	"bufio"
-	"os"
-	"github.com/sirupsen/logrus"
+	"flag"
 	"fmt"
 	"github.com/MrDefinite/gedis/clientsdk"
+	"github.com/sirupsen/logrus"
+	"os"
+	"strings"
 )
-
 
 const (
 	defaultConnPort = 9019
@@ -28,7 +28,6 @@ func main() {
 	log.Info("Creating gedis client service...")
 
 	gClient := clientsdk.CreateNewInstance()
-
 
 	host := flag.String("host", defaultConnHost, "gedis host address")
 	port := flag.Int("port", defaultConnPort, "gedis host port")
@@ -54,13 +53,14 @@ func main() {
 			continue
 		}
 
-		response, err := gClient.ProcessCmd(line)
+		cmds := formatCmd(line)
+		outputStr, err := gClient.ProcessCmdString(cmds)
 		if err != nil {
 			log.Error(err.Error())
 			break
 		}
 
-		fmt.Println("\"" + response + "\"")
+		fmt.Println("\"" + outputStr + "\"")
 	}
 
 	gClient.CloseConnection()
@@ -74,3 +74,13 @@ func simpleCmdCheck(cmd string) bool {
 	return true
 }
 
+func formatCmd(cmd string) []string {
+	strs := strings.Split(cmd, " ")
+	var cmds []string
+	for _, s := range strs {
+		s = strings.TrimSpace(s)
+		cmds = append(cmds, s)
+	}
+
+	return cmds
+}

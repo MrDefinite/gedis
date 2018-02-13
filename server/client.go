@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/MrDefinite/gedis/database"
 	"github.com/MrDefinite/gedis/database/types"
-	"github.com/MrDefinite/gedis/common/protocol/resp"
+	//"github.com/MrDefinite/gedis/common/protocol/resp"
 )
 
 type GedisClient struct {
@@ -88,18 +88,18 @@ func (c *GedisClient) sendResponse(response string) {
 }
 
 func parseCmd(cmd string) ([]*types.GedisObject, error) {
-	requestCmd, err := resp.ParseRequest(cmd)
-	if err != nil {
-		return nil, err
-	}
+	//requestCmd, err := resp.ParseRequest(cmd)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//var objArgs []*types.GedisObject
+	//objArgs = append(objArgs, types.CreateStringObject(requestCmd.Name))
+	//
+	//for _, arg := range requestCmd.Params {
+	//	objArg := types.CreateStringObject(arg)
+	//	objArgs = append(objArgs, objArg)
+	//}
 
-	var objArgs []*types.GedisObject
-	objArgs = append(objArgs, types.CreateStringObject(requestCmd.Name))
-
-	for _, arg := range requestCmd.Params {
-		objArg := types.CreateStringObject(arg)
-		objArgs = append(objArgs, objArg)
-	}
-
-	return objArgs, nil
+	return nil, nil
 }

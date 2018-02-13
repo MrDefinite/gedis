@@ -1,11 +1,13 @@
 package clientsdk
 
 import (
+	"errors"
+	"github.com/MrDefinite/gedis/protocol/resp"
 	"github.com/sirupsen/logrus"
 	"net"
-	"errors"
-	"sync"
 	"strconv"
+	"sync"
+	"time"
 )
 
 var (
@@ -32,6 +34,8 @@ type Gclient struct {
 	requestTimeout          int32
 	isCommunicatingToServer bool
 	commLock                sync.Mutex
+
+	parser *resp.Parser
 }
 
 func CreateNewInstance() *Gclient {
@@ -78,11 +82,50 @@ func (gc *Gclient) CloseConnection() error {
 
 func (gc *Gclient) ParseAndProcessCmd(cmd string) (string, error) {
 
-
-
-
 	return "", nil
 }
 
+func (gc *Gclient) heartbeat() {
 
+}
 
+func (gc *Gclient) sendRequestAndGetResponse(encodedRequest []byte) ([]byte, error) {
+	if encodedRequest == nil {
+		return nil, errors.New("cannot send empty request to server")
+	}
+
+	if gc.isCommunicatingToServer {
+		return nil, errors.New("there is another request being processed")
+	}
+
+	gc.commLock.Lock()
+
+	// Send it to server now
+	gc.conn.Write(encodedRequest)
+
+	// Init buffer
+	buff := make([]byte, resp.MaxDataSizeReadPerTime)
+
+	gc.conn.SetReadDeadline(time.Now().Add(time.Duration(gc.requestTimeout) * time.Second))
+	// Wait for response from server
+
+	var n int
+	var err error
+	//var parser resp.
+	for n, err = gc.conn.Read(buff); ; {
+		if err != nil {
+			gc.commLock.Unlock()
+			return nil, err
+		}
+
+	}
+
+	gc.commLock.Unlock()
+
+	return buff[:n], nil
+}
+
+// Return the output string, and the error if there is
+func (gc *Gclient) ProcessCmdString(cmds []string) (string, error) {
+
+}

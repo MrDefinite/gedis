@@ -5,6 +5,10 @@ import "github.com/pkg/errors"
 type DataType int8
 
 const (
+	defaultBufferCap = 1024
+)
+
+const (
 	TypeSimpleString = iota
 	TypeBulkString
 	TypeError
@@ -18,6 +22,10 @@ const (
 	integers     = ':'
 	bulkString   = '$'
 	arrays       = '*'
+)
+
+const (
+	Crlf = "/r/n"
 )
 
 var (

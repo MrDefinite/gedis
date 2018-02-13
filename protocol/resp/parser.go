@@ -7,16 +7,10 @@ import (
 	"strconv"
 )
 
-const (
-	// 512 MB
-	MaxDataSize = 1024 * 1024 * 512
-	// 16 MB
-	MaxDataSizeReadPerTime = 1024 * 1024 * 16
-)
-
 var (
 	ErrMalFormatInt      = errors.New("cannot parse integer from non gedis object encoded object")
 	ErrMalFormatNodeType = errors.New("cannot parse with wrong node type")
+	ErrMalFormatNodeData = errors.New("cannot parse with wrong node data")
 )
 
 /**
@@ -44,7 +38,7 @@ func CreateNewParser(reader io.Reader) *Parser {
 	return &parser
 }
 
-func (p *Parser) parse() (*ParsedResult, error) {
+func (p *Parser) Parse() (*ParsedResult, error) {
 	// let's begin the parse work
 	nodes, err := p.parseType()
 	if err != nil {
@@ -185,4 +179,88 @@ func (p *Parser) parseStringObjToInt(obj interface{}) (int, error) {
 	}
 
 	return length, nil
+}
+
+func (p *Parser) FormatResultAsString(pr *ParsedResult) (string, error) {
+	return p.formatNodeAsString(pr.data)
+}
+
+func (p *Parser) formatNodeAsString(node *Node) (string, error) {
+	var out string
+	var err error
+	switch node.dataType {
+	case TypeArray:
+		out, err = p.formatArrayData(node.data)
+		if err != nil {
+			return "", err
+		}
+		break
+	case TypeBulkString:
+		out, err = p.formatStringData(node.data)
+		if err != nil {
+			return "", err
+		}
+		break
+	case TypeInteger:
+		out, err = p.formatStringData(node.data)
+		if err != nil {
+			return "", err
+		}
+		break
+	case TypeError:
+		out, err = p.formatStringData(node.data)
+		if err != nil {
+			return "", err
+		}
+		break
+	case TypeSimpleString:
+		out, err = p.formatStringData(node.data)
+		if err != nil {
+			return "", err
+		}
+		break
+	default:
+		return "", ErrMalFormatNodeType
+	}
+
+	return out, nil
+}
+
+func (p *Parser) formatArrayData(d interface{}) (string, error) {
+	res := "[ "
+	switch dp := d.(type) {
+	case []*Node:
+		for i, n := range dp {
+			s, err := p.formatNodeAsString(n)
+			if err != nil {
+				return "", err
+			}
+			if i != len(dp)-1 {
+				res += s + ", "
+			}
+		}
+		break
+	default:
+		return "", ErrMalFormatNodeData
+	}
+
+	res += " ]"
+	return res, nil
+}
+
+func (p *Parser) formatStringData(d interface{}) (string, error) {
+	var res string
+	switch dp := d.(type) {
+	case *basicdata.GedisObject:
+		s, err := basicdata.GetStringValueFromObject(dp)
+		if err != nil {
+			return "", err
+		}
+		res = s
+		break
+	default:
+		return "", ErrMalFormatNodeData
+	}
+
+	return res, nil
 }

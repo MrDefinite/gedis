@@ -14,6 +14,10 @@ var (
 	log = logrus.New()
 )
 
+var (
+	ErrAnotherRequestProcessing = errors.New("there is another request being processed")
+)
+
 const (
 	defaultConnType = "tcp"
 	defaultLogLevel = 3
@@ -36,6 +40,7 @@ type Gclient struct {
 	commLock                sync.Mutex
 
 	parser *resp.Parser
+	writer *resp.Writer
 }
 
 func CreateNewInstance() *Gclient {
@@ -66,6 +71,8 @@ func (gc *Gclient) ConnectToServer(host string, port int) error {
 	}
 
 	gc.conn = conn
+	gc.parser = resp.CreateNewParser(conn)
+	gc.writer = resp.CreateNewWriter(conn)
 
 	return nil
 }
@@ -80,52 +87,46 @@ func (gc *Gclient) CloseConnection() error {
 	return nil
 }
 
-func (gc *Gclient) ParseAndProcessCmd(cmd string) (string, error) {
-
-	return "", nil
-}
-
 func (gc *Gclient) heartbeat() {
 
 }
 
-func (gc *Gclient) sendRequestAndGetResponse(encodedRequest []byte) ([]byte, error) {
-	if encodedRequest == nil {
-		return nil, errors.New("cannot send empty request to server")
-	}
-
-	if gc.isCommunicatingToServer {
-		return nil, errors.New("there is another request being processed")
-	}
-
-	gc.commLock.Lock()
-
-	// Send it to server now
-	gc.conn.Write(encodedRequest)
-
-	// Init buffer
-	buff := make([]byte, resp.MaxDataSizeReadPerTime)
-
-	gc.conn.SetReadDeadline(time.Now().Add(time.Duration(gc.requestTimeout) * time.Second))
-	// Wait for response from server
-
-	var n int
-	var err error
-	//var parser resp.
-	for n, err = gc.conn.Read(buff); ; {
-		if err != nil {
-			gc.commLock.Unlock()
-			return nil, err
-		}
-
-	}
-
-	gc.commLock.Unlock()
-
-	return buff[:n], nil
+func (gc *Gclient) SetConnectionTimeout() {
+	gc.conn.SetReadDeadline(time.Now().Add(time.Duration(gc.requestTimeout)))
 }
 
 // Return the output string, and the error if there is
 func (gc *Gclient) ProcessCmdString(cmds []string) (string, error) {
+	if gc.isCommunicatingToServer {
+		return "", ErrAnotherRequestProcessing
+	}
 
+	gc.commLock.Lock()
+	gc.isCommunicatingToServer = true
+	defer gc.commLock.Unlock()
+
+	// pos 0 is cmd, and pos 1,2,3... is args
+	arrayLen := len(cmds)
+	gc.writer.AppendArrayLength(arrayLen)
+
+	for _, d := range cmds {
+		gc.writer.AppendBulkString(d)
+	}
+
+	gc.SetConnectionTimeout()
+	gc.writer.Write()
+
+	// Now let's wait for the response
+	pr, err := gc.parser.Parse()
+	if err != nil {
+		return "", err
+	}
+
+	res, err := gc.parser.FormatResultAsString(pr)
+	if err != nil {
+		return "", err
+	}
+
+	gc.isCommunicatingToServer = false
+	return res, nil
 }

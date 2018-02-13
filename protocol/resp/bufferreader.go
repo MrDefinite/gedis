@@ -6,10 +6,6 @@ import (
 	"io"
 )
 
-const (
-	defaultBufferCap = 1024
-)
-
 var (
 	ErrDataTooLong = errors.New("Cannot find the trailing /n for data too long")
 )

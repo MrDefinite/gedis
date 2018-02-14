@@ -1,20 +1,20 @@
 package command
 
 import (
-	"github.com/MrDefinite/gedis/database/types"
+	"github.com/MrDefinite/gedis/basicdata"
 	"github.com/MrDefinite/gedis/database"
 )
 
 type setCommandProc struct {
 }
 
-func (c setCommandProc) execute(db *database.GedisDB, args []*types.GedisObject) *types.GedisObject {
+func (c setCommandProc) execute(db *database.GedisDB, args []*basicdata.GedisObject) *basicdata.GedisObject {
 	key := args[0]
 	value := args[1]
 
-	value = types.TryObjectEncoding(value)
+	value = basicdata.TryObjectEncoding(value)
 
 	db.Dict[*key] = value
 
-	return types.CommonObjects.Ok
+	return basicdata.CommonObjects.Ok
 }

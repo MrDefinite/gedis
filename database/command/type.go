@@ -1,23 +1,23 @@
 package command
 
 import (
-	"github.com/MrDefinite/gedis/database/types"
+	"github.com/MrDefinite/gedis/basicdata"
 	"github.com/MrDefinite/gedis/database"
 )
 
 type typeCommandProc struct {
 }
 
-func (c typeCommandProc) execute(db *database.GedisDB, args []*types.GedisObject) *types.GedisObject {
+func (c typeCommandProc) execute(db *database.GedisDB, args []*basicdata.GedisObject) *basicdata.GedisObject {
 	key := args[0]
 
 	if key == nil {
-		return types.CommonObjects.Nullbulk
+		return basicdata.CommonObjects.NullBulk
 	}
 
-	obj, err := types.GetEncodeString(key)
+	obj, err := basicdata.GetEncodeString(key)
 	if err != nil {
-		return types.CommonObjects.Err
+		return basicdata.CommonObjects.Err
 	}
 
 	return obj

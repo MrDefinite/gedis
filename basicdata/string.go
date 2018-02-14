@@ -53,18 +53,18 @@ func GetStringValueFromObject(obj *GedisObject) (string, error) {
 }
 
 func getRawStringValueFromObject(data interface{}) (string, error) {
-	switch _ := data.(type) {
+	switch dp := data.(type) {
 	case string:
-		return data.(string), nil
+		return dp, nil
 	}
 	return "", ErrNonStringEncoding
 }
 
 func getEmbStrStringValueFromObject(data interface{}) (string, error) {
 	// TODO: change it later
-	switch _ := data.(type) {
+	switch dp := data.(type) {
 	case string:
-		return data.(string), nil
+		return dp, nil
 	}
 	return "", ErrNonStringEncoding
 }

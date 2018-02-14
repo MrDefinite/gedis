@@ -11,6 +11,7 @@ var (
 	ErrMalFormatInt      = errors.New("cannot parse integer from non gedis object encoded object")
 	ErrMalFormatNodeType = errors.New("cannot parse with wrong node type")
 	ErrMalFormatNodeData = errors.New("cannot parse with wrong node data")
+	ErrCmdFormat         = errors.New("cannot parse with non bulk array command")
 )
 
 /**
@@ -179,6 +180,43 @@ func (p *Parser) parseStringObjToInt(obj interface{}) (int, error) {
 	}
 
 	return length, nil
+}
+
+func (p *Parser) FormatCmdResultAsGedisObject(pr *ParsedResult) ([]*basicdata.GedisObject, error) {
+	return p.formatCmdNodeAsGedisObject(pr.data)
+}
+
+func (p *Parser) formatCmdNodeAsGedisObject(node *Node) ([]*basicdata.GedisObject, error) {
+	// The cmd should only be bulk array
+	if node.dataType != TypeArray {
+		return nil, ErrCmdFormat
+	}
+
+	return p.formatCmdArray(node.data)
+}
+
+func (p *Parser) formatCmdArray(d interface{}) ([]*basicdata.GedisObject, error) {
+	var out []*basicdata.GedisObject
+	switch dp := d.(type) {
+	case []*Node:
+		for _, n := range dp {
+			b, err := p.formatCmdBulk(n)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, b)
+		}
+		break
+	}
+	return nil, ErrCmdFormat
+}
+
+func (p *Parser) formatCmdBulk(d interface{}) (*basicdata.GedisObject, error) {
+	switch dp := d.(type) {
+	case *basicdata.GedisObject:
+		return dp, nil
+	}
+	return nil, ErrCmdFormat
 }
 
 func (p *Parser) FormatResultAsString(pr *ParsedResult) (string, error) {

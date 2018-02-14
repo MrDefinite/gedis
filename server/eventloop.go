@@ -1,22 +1,22 @@
 package server
 
 import (
-	"time"
+	"github.com/MrDefinite/gedis/basicdata"
 	"github.com/MrDefinite/gedis/database/command"
-	"github.com/MrDefinite/gedis/database/types"
+	"time"
 )
 
 const (
-	EL_NONE_EVENTS = 0
-	EL_ALL_EVENTS
-	EL_FILE_EVENTS
-	EL_TIME_EVENTS
-	EL_DONT_WAIT
+	elNoneEvents = iota
+	elAllEvents
+	elFileEvents
+	elTimeEvents
+	elDontWait
 )
 
 const (
-	FE_REQUEST  = 0
-	FE_RESPONSE
+	feRequest = iota
+	feResponse
 )
 
 type fileProc interface {
@@ -24,29 +24,25 @@ type fileProc interface {
 }
 
 type requestFileProc struct {
+	req *request
 }
 
 func (rp requestFileProc) execute(eventLoop *eventLoop, c *GedisClient) {
-	log.Debugf("Executing request file proc now with %d params", len(c.CmdArgs))
-	resObj, err := command.DispatchCommand(c.DB, c.CmdArgs)
+	log.Debugf("Executing request file proc now with %d params", len(rp.req.data))
+	resObj, err := command.DispatchCommand(c.DB, rp.req.data)
 	if err != nil {
 		log.Errorf("%s", err.Error())
-		c.CmdArgs = nil
 		return
 	}
-	c.CmdArgs = nil
-	c.Response = resObj
+	c.enqueueResponseObj([]*basicdata.GedisObject{resObj})
 }
 
 type responseFileProc struct {
+	res *response
 }
 
 func (wp responseFileProc) execute(eventLoop *eventLoop, c *GedisClient) {
-	response := c.Response
-
-	c.sendResponse(types.GetStringValueFromObject(response))
-
-	c.Response = nil
+	c.sendResponse()
 }
 
 type fileEvent struct {
@@ -76,16 +72,23 @@ func CreateEventLoop(gs *GedisServer) {
 
 func checkAndCreateEvents(gs *GedisServer) {
 	for _, client := range gs.clients {
-		if client.CmdArgs != nil {
-			req := requestFileProc{}
+		// try to get a new request
+		req := client.dequeueRequest()
+		if req != nil {
 			log.Debug("Creating request file event now")
-			event := CreateFileEvent(client, req, FE_REQUEST)
+			req := requestFileProc{
+				req: req,
+			}
+			event := CreateFileEvent(client, req, feRequest)
 			gs.el.fileEvents = append(gs.el.fileEvents, event)
 		}
-		if client.Response != nil {
-			res := responseFileProc{}
+		res := client.dequeueResponse()
+		if res != nil {
 			log.Debug("Creating response file event now")
-			event := CreateFileEvent(client, res, FE_RESPONSE)
+			res := responseFileProc{
+				res: res,
+			}
+			event := CreateFileEvent(client, res, feResponse)
 			gs.el.fileEvents = append(gs.el.fileEvents, event)
 		}
 	}
@@ -95,9 +98,9 @@ func processFileEvents(gs *GedisServer) {
 	for i := len(gs.el.fileEvents) - 1; i >= 0; i-- {
 		fe := gs.el.fileEvents[i]
 		var proc fileProc
-		if fe.eventType == FE_REQUEST {
+		if fe.eventType == feRequest {
 			proc = fe.requestFileProc
-		} else if fe.eventType == FE_RESPONSE {
+		} else if fe.eventType == feResponse {
 			proc = fe.responseFileProc
 		}
 		if proc != nil {
@@ -113,7 +116,7 @@ func processTimeEvents(gs *GedisServer) {
 }
 
 func processEvents(gs *GedisServer, flags uint8) {
-	if flags == EL_ALL_EVENTS {
+	if flags == elAllEvents {
 		processFileEvents(gs)
 		processTimeEvents(gs)
 	}
@@ -127,10 +130,10 @@ func CreateFileEvent(client *GedisClient, proc fileProc, mask uint8) *fileEvent 
 		client:           client,
 	}
 
-	if mask == FE_REQUEST {
+	if mask == feRequest {
 		fe.requestFileProc = proc
 	}
-	if mask == FE_RESPONSE {
+	if mask == feResponse {
 		fe.responseFileProc = proc
 	}
 
@@ -157,7 +160,7 @@ func MainLoop(gs *GedisServer) {
 		checkAndCreateEvents(gs)
 
 		// Run event loop
-		processEvents(gs, EL_ALL_EVENTS)
+		processEvents(gs, elAllEvents)
 	}
 
 }

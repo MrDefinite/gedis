@@ -1,14 +1,14 @@
 package command
 
 import (
+	"github.com/MrDefinite/gedis/basicdata"
 	"github.com/MrDefinite/gedis/database"
-	"github.com/MrDefinite/gedis/database/types"
 )
 
 type cmdCommandProc struct {
 }
 
-func (c cmdCommandProc) execute(db *database.GedisDB, args []*types.GedisObject) *types.GedisObject {
+func (c cmdCommandProc) execute(db *database.GedisDB, args []*basicdata.GedisObject) *basicdata.GedisObject {
 
 	return nil
 }

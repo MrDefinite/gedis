@@ -2,9 +2,9 @@ package command
 
 import (
 	"fmt"
-	"github.com/MrDefinite/gedis/database/types"
-	"github.com/pkg/errors"
+	"github.com/MrDefinite/gedis/basicdata"
 	"github.com/MrDefinite/gedis/database"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,7 +28,7 @@ type Command struct {
 }
 
 type commandProc interface {
-	execute(db *database.GedisDB, args []*types.GedisObject) *types.GedisObject
+	execute(db *database.GedisDB, args []*basicdata.GedisObject) *basicdata.GedisObject
 }
 
 func initCommand(name string, proc commandProc) *Command {
@@ -45,9 +45,13 @@ func initCommand(name string, proc commandProc) *Command {
 	return &cmd
 }
 
-func DispatchCommand(db *database.GedisDB, cmdArgs []*types.GedisObject) (*types.GedisObject, error) {
+func DispatchCommand(db *database.GedisDB, cmdArgs []*basicdata.GedisObject) (*basicdata.GedisObject, error) {
 	log.Debugf("Dispatching the command...")
-	commandName := types.GetStringValueFromObject(cmdArgs[0])
+	commandName, err := basicdata.GetStringValueFromObject(cmdArgs[0])
+	if err != nil {
+		return nil, err
+	}
+
 	currentCommand := commandDict[commandName]
 	if currentCommand == nil {
 		fmt.Errorf("cannot find command named as: %s", commandName)

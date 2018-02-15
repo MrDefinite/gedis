@@ -3,6 +3,7 @@ package command
 import (
 	"github.com/MrDefinite/gedis/basicdata"
 	"github.com/MrDefinite/gedis/database"
+	"github.com/MrDefinite/gedis/protocol/resp"
 )
 
 type getCommandProc struct {
@@ -13,7 +14,13 @@ func (c getCommandProc) execute(db *database.GedisDB, args []*basicdata.GedisObj
 	value := db.Dict[*key]
 
 	if value == nil {
-		return basicdata.CommonObjects.NullBulk
+		return resp.CommonObjects.NullBulk
 	}
-	return value.(*basicdata.GedisObject)
+
+	switch dp := value.(type) {
+	case *basicdata.GedisObject:
+		return resp.Encoder.EncodeToResponseObj(dp)
+	}
+
+	return resp.CommonObjects.NullBulk
 }

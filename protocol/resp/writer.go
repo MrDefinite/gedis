@@ -24,6 +24,10 @@ func (w *Writer) Write() error {
 	return nil
 }
 
+func (w *Writer) AppendPlainString(s string) {
+	w.bw.appendString(s)
+}
+
 func (w *Writer) AppendSimpleString(s string) {
 	w.bw.appendString(string(simpleString))
 	w.bw.appendString(s)

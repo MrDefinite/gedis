@@ -3,6 +3,7 @@ package command
 import (
 	"github.com/MrDefinite/gedis/basicdata"
 	"github.com/MrDefinite/gedis/database"
+	"github.com/MrDefinite/gedis/protocol/resp"
 )
 
 type setCommandProc struct {
@@ -16,5 +17,5 @@ func (c setCommandProc) execute(db *database.GedisDB, args []*basicdata.GedisObj
 
 	db.Dict[*key] = value
 
-	return basicdata.CommonObjects.Ok
+	return resp.CommonObjects.Ok
 }

@@ -114,6 +114,12 @@ func (p *Parser) parseBulkString() (*Node, error) {
 		return nil, err
 	}
 
+	if bulkLength == -1 {
+		// Empty bulk string
+		strObj := basicdata.CreateEmptyStringObject()
+		return &Node{dataType: TypeBulkString, data: strObj}, nil
+	}
+
 	// Ensure the data is there
 	err = p.br.require(bulkLength)
 	if err != nil {

@@ -9,14 +9,18 @@ var (
 	ErrNonStringEncoding = errors.New("Cannot get string from non string encoding object")
 )
 
+func CreateEmptyStringObject() *GedisObject {
+	return CreateObjectWithEncoding(GedisString, GedisEncodingRaw, "")
+}
+
 func CreateStringObjectWithBytes(in []byte) *GedisObject {
 	t := getDesiredEncodingForBytes(in)
-	return createObjectWithEncoding(GedisString, t, string(in))
+	return CreateObjectWithEncoding(GedisString, t, string(in))
 }
 
 func CreateStringObject(in string) *GedisObject {
 	t := getDesiredEncoding(in)
-	return createObjectWithEncoding(GedisString, t, in)
+	return CreateObjectWithEncoding(GedisString, t, in)
 }
 
 func getDesiredEncoding(in string) GedisObjectEncodingType {

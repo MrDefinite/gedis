@@ -81,7 +81,7 @@ func (c *GedisClient) handleRequest() {
 		case nil:
 			cmdArgs, err := c.parser.FormatCmdResultAsGedisObject(pr)
 			if err != nil {
-				c.enqueueResponseObj([]*basicdata.GedisObject{basicdata.CommonObjects.SynTaxErr})
+				c.enqueueResponseObj([]*basicdata.GedisObject{resp.CommonObjects.SynTaxErr})
 			} else {
 				// process the command now
 				c.enqueueRequestObj(cmdArgs)
@@ -162,7 +162,7 @@ func (c *GedisClient) sendResponseAsString(res *response) {
 				// TODO: handle the error
 				return
 			}
-			c.writer.AppendSimpleString(s)
+			c.writer.AppendPlainString(s)
 			c.writer.Write()
 		}
 	}

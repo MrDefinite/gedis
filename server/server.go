@@ -69,7 +69,7 @@ func handleConnections(gs *GedisServer) {
 
 		log.Debug("Enqueue new client instance")
 		gs.clients = append(gs.clients, client)
-		go client.handleRequest()
+		client.handleRequest()
 	}
 }
 
@@ -93,7 +93,7 @@ func InitServer(gs *GedisServer) {
 	initDB(gs)
 
 	listenToPort(gs)
-	handleConnections(gs)
+	go handleConnections(gs)
 }
 
 func InitServerConfig(gs *GedisServer) {

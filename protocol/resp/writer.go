@@ -36,22 +36,34 @@ func (w *Writer) AppendSimpleStringBytes(b []byte) {
 	w.bw.appendString(Crlf)
 }
 
-func (w *Writer) AppendInteger(i int) {
-	w.bw.appendString(string(integers))
+func (w *Writer) AppendIntegerValue(i int) {
 	w.bw.appendString(strconv.Itoa(i))
 	w.bw.appendString(Crlf)
 }
 
-func (w *Writer) AppendIntegerString(s string) {
-	w.bw.appendString(string(integers))
+func (w *Writer) AppendIntegerValueString(s string) {
 	w.bw.appendString(s)
 	w.bw.appendString(Crlf)
 }
 
-func (w *Writer) AppendIntegerBytes(b []byte) {
-	w.bw.appendString(string(integers))
+func (w *Writer) AppendIntegerValueBytes(b []byte) {
 	w.bw.appendBytes(b)
 	w.bw.appendString(Crlf)
+}
+
+func (w *Writer) AppendInteger(i int) {
+	w.bw.appendString(string(integers))
+	w.AppendIntegerValue(i)
+}
+
+func (w *Writer) AppendIntegerString(s string) {
+	w.bw.appendString(string(integers))
+	w.AppendIntegerValueString(s)
+}
+
+func (w *Writer) AppendIntegerBytes(b []byte) {
+	w.bw.appendString(string(integers))
+	w.AppendIntegerValueBytes(b)
 }
 
 func (w *Writer) AppendError(s string) {
@@ -68,14 +80,14 @@ func (w *Writer) AppendErrorBytes(b []byte) {
 
 func (w *Writer) AppendBulkString(s string) {
 	w.bw.appendString(string(bulkString))
-	w.AppendInteger(len(s))
+	w.AppendIntegerValue(len(s))
 	w.bw.appendString(s)
 	w.bw.appendString(Crlf)
 }
 
 func (w *Writer) AppendBulkStringBytes(b []byte) {
 	w.bw.appendString(string(bulkString))
-	w.AppendInteger(len(b))
+	w.AppendIntegerValue(len(b))
 	w.bw.appendBytes(b)
 	w.bw.appendString(Crlf)
 }

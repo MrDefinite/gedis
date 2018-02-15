@@ -92,7 +92,7 @@ func (gc *Gclient) heartbeat() {
 }
 
 func (gc *Gclient) SetConnectionTimeout() {
-	gc.conn.SetReadDeadline(time.Now().Add(time.Duration(gc.requestTimeout)))
+	gc.conn.SetReadDeadline(time.Now().Add(time.Duration(gc.requestTimeout) * time.Second))
 }
 
 // Return the output string, and the error if there is

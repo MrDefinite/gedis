@@ -25,7 +25,7 @@ const (
 )
 
 const (
-	Crlf = "/r/n"
+	Crlf = "\r\n"
 )
 
 var (

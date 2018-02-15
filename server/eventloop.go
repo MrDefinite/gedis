@@ -42,7 +42,7 @@ type responseFileProc struct {
 }
 
 func (wp responseFileProc) execute(eventLoop *eventLoop, c *GedisClient) {
-	c.sendResponse()
+	c.sendResponse(wp.res)
 }
 
 type fileEvent struct {

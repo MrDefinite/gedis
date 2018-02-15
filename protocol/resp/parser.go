@@ -49,15 +49,10 @@ func (p *Parser) Parse() (*ParsedResult, error) {
 }
 
 func (p *Parser) parseType() (*Node, error) {
-	if p.br.unread() < 1 {
-		err := p.br.require(1)
-		if err != nil {
-			return nil, err
-		}
+	b, err := p.br.readByte()
+	if err != nil {
+		return nil, err
 	}
-
-	b := p.br.buf[p.br.offset]
-	p.br.offset += 1
 
 	switch b {
 	case simpleString:
@@ -200,7 +195,10 @@ func (p *Parser) formatCmdArray(d interface{}) ([]*basicdata.GedisObject, error)
 	switch dp := d.(type) {
 	case []*Node:
 		for _, n := range dp {
-			b, err := p.formatCmdBulk(n)
+			if n.dataType != TypeBulkString {
+				return nil, ErrMalFormatNodeType
+			}
+			b, err := p.formatCmdBulk(n.data)
 			if err != nil {
 				return nil, err
 			}
@@ -208,7 +206,7 @@ func (p *Parser) formatCmdArray(d interface{}) ([]*basicdata.GedisObject, error)
 		}
 		break
 	}
-	return nil, ErrCmdFormat
+	return out, nil
 }
 
 func (p *Parser) formatCmdBulk(d interface{}) (*basicdata.GedisObject, error) {

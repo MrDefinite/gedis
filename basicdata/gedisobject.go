@@ -115,6 +115,10 @@ func createObjectWithEncoding(objType GedisObjectType, encoding GedisObjectEncod
 	return &obj
 }
 
+func GetType(obj *GedisObject) GedisObjectType {
+	return obj.objType
+}
+
 func GetEncodeString(obj *GedisObject) (*GedisObject, error) {
 	encodeObj := GedisObject{
 		objType:  GedisString,

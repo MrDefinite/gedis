@@ -143,10 +143,27 @@ func (c *GedisClient) dequeueRequest() *request {
 	return req
 }
 
-func (c *GedisClient) sendResponse() {
-	c.sendResponseAsString()
+func (c *GedisClient) sendResponse(res *response) {
+	c.sendResponseAsString(res)
 }
 
-func (c *GedisClient) sendResponseAsString() {
+func (c *GedisClient) sendResponseAsString(res *response) {
+	d := res.data
+	if len(d) == 0 {
+		return
+	}
 
+	for _, obj := range d {
+		t := basicdata.GetType(obj)
+		switch t {
+		case basicdata.GedisString:
+			s, err := basicdata.GetStringValueFromObject(obj)
+			if err != nil {
+				// TODO: handle the error
+				return
+			}
+			c.writer.AppendSimpleString(s)
+			c.writer.Write()
+		}
+	}
 }

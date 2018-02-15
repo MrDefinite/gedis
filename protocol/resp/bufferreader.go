@@ -1,7 +1,6 @@
 package resp
 
 import (
-	"bytes"
 	"github.com/pkg/errors"
 	"io"
 )
@@ -46,7 +45,7 @@ func (br *bufferReader) unused() int {
 }
 
 func (br *bufferReader) require(required int) error {
-	if required-br.unused() <= 0 {
+	if required-br.unread() <= 0 {
 		return nil
 	}
 
@@ -138,14 +137,14 @@ func (br *bufferReader) readNextBytes(size int) ([]byte, error) {
 
 // Not include the trailing '/r/n'
 func (br *bufferReader) readLineBytes() ([]byte, error) {
-	index := bytes.IndexByte(br.buf, '\n')
+	index := br.lookForLineEnding()
 	if index <= 0 {
 		if err := br.fill(); err != nil {
 			return nil, err
 		}
 	}
 
-	index = bytes.IndexByte(br.buf, '\n')
+	index = br.lookForLineEnding()
 	if index <= 0 {
 		return nil, ErrDataTooLong
 	}
@@ -168,4 +167,14 @@ func (br *bufferReader) readLine() (string, error) {
 	}
 
 	return string(data), nil
+}
+
+func (br *bufferReader) lookForLineEnding() int {
+	for i := br.offset; i < br.size; i++ {
+		b := br.buf[i]
+		if b == '\n' {
+			return i
+		}
+	}
+	return -1
 }

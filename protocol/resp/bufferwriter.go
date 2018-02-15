@@ -22,7 +22,7 @@ func (bw *bufferWriter) reset(writer io.Writer) {
 	*bw = bufferWriter{
 		writer: writer,
 	}
-	bw.buf = make([]byte, defaultBufferCap)
+	bw.buf = make([]byte, 0)
 }
 
 func (bw *bufferWriter) appendBytes(b []byte) {
